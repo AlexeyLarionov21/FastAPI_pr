@@ -41,5 +41,6 @@ typing_extensions==4.12.2
 ujson==5.10.0
 urllib3==2.2.2
 uvicorn==0.30.5
+vercel==0.2.1
 watchfiles==0.22.0
 websockets==12.0
