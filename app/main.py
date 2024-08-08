@@ -8,23 +8,23 @@ path_to_json = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 app = FastAPI()
 
 @app.get('/students')
-def get_all_students(course: Optional[int] = None):
+def get_all_students(course: int | None = None):
     students = json_to_dict_list(path_to_json)
     if course is None:
         return students
-    else:
-        return_list = []
-        for student in students:
-            if student["course"] == course:
-                return_list.append(student)
-        return return_list
+    return_list = []
+    for student in students:
+        if student["course"] == course:
+            return_list.append(student)
+    return return_list
+    
 
 @app.get("/")
 def home_page():
     return {"message": "Hello, User!"}
 
 @app.get("/students/{course}")
-def get_all_students_course(course: int, major: Optional[str] = None, enrollment_year: Optional[int]=2018):
+def get_all_students_course(course: int, major: str | None = None, enrollment_year: int | None = 2018):
     students = json_to_dict_list(path_to_json)
     filtered_students = []
     for student in students:
