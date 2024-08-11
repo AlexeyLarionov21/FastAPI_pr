@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from utils import json_to_dict_list
 import os
 from typing import Optional
+from models import Student
 
 path_to_json = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'students.json')
 
@@ -52,3 +53,11 @@ def get_student_by_id(student_id: int):
         if student['student_id'] == student_id:
             return student
     raise HTTPException(status_code=404, detail="Student not found")
+
+@app.get("/student", response_model=Student)
+def get_student_from_param_id(student_id: int):
+    students = json_to_dict_list(path_to_json)
+    for student in students:
+        if student["student_id"] == student_id:
+            return student
+

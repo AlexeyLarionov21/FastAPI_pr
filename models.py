@@ -4,6 +4,14 @@ from datetime import date, datetime
 from typing import Optional
 import re
 
+class Major(str, Enum):
+    informatics = "Информатика"
+    economics = "Экономика"
+    law = "Право"
+    medicine = "Медицина"
+    engineering = "Инженерия"
+    languages = "Языки"
+
 class Student(BaseModel):
     student_id: int
     phone_number: str = Field(default=..., description="Номер телефона в международном формате, начинающийся с '+'")

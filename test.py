@@ -1,8 +1,10 @@
+from datetime import date
 import os
 import json
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from models import Student
 
 client = TestClient(app)
 
@@ -94,3 +96,28 @@ def test_get_student_by_id(student_id, expected_status, expected_student):
         assert response.json() == expected_student
     else:
         assert response.json() == {"detail": "Student not found"}
+
+@pytest.mark.parametrize(
+    [
+        (1, 200, {
+                "student_id": 1,
+                "phone_number": "+1234567890",
+                "first_name": "Иван",
+                "last_name": "Иванов",
+                "date_of_birth": date(2000, 1, 1),
+                "email": "ivan.ivanov@example.com",
+                "address": "Москва, ул. Пушкина, д. Колотушкина",
+                "enrollment_year": 1022,
+                "major": "Информатика",
+                "course": 3,
+                "special_notes": "Увлекается программированием"
+        }),
+        (999, 404, None),  # Тест для несуществующего студента
+    ]
+)
+def test_valid_student(data: dict)->None:
+    try:
+        student = Student(**data)
+        print(student)
+    except ValueError as e:
+        print(f"Error Validation: {e}")
