@@ -1,12 +1,12 @@
-from fastapi import FastAPI, HTTPException
-from utils import json_to_dict_list
+from fastapi import FastAPI, HTTPException, Depends
+from utils import json_to_dict_list, dell_student, upd_student, add_student
 import os
-from typing import Optional
-from models import Student
+from app.students.models import Student, RBStudent, SUpdateFilter, StudentUpdate, SDeleteFilter
+from typing import List
 
 path_to_json = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'students.json')
 
-app = FastAPI()
+app = FastAPI(debug=True)
 
 @app.get('/students')
 def get_all_students(course: int | None = None):
@@ -25,39 +25,56 @@ def home_page():
     return {"message": "Hello, User!"}
 
 @app.get("/students/{course}")
-def get_all_students_course(course: int, major: str | None = None, enrollment_year: int | None = 2018):
+def get_all_students_course(request_body: RBStudent = Depends()) -> List[Student]:
     students = json_to_dict_list(path_to_json)
     filtered_students = []
     for student in students:
-        if student['course'] == course:
-            filtered_students.append(student)    
-    if major:
-        filtered_students = [student for student in filtered_students if student['major'].lower() == major.lower()]    
-    if enrollment_year:
-        filtered_students = [student for student in filtered_students if student['enrollment_year'] == enrollment_year]
-    return filtered_students    
+        if student["course"] == request_body.course:
+            filtered_students.append(student)
 
-@app.get("/student")
-def get_student_by_id(student_id: Optional[int] = None):
-    students = json_to_dict_list(path_to_json)
-    if student_id is None:
-        return students
-    for student in students:
-        if student['student_id'] == student_id:
-            return student
+    if request_body.major:
+        filtered_students = [student for student in filtered_students if
+                             student['major'].lower() == request_body.major.lower()]
+    if request_body.enrollment_year:
+        filtered_students = [student for student in filtered_students if
+                             student['enrollment_year'] == request_body.enrollment_year]
+    return filtered_students 
 
-@app.get("/students/id/{student_id}")
-def get_student_by_id(student_id: int):
-    students = json_to_dict_list(path_to_json)
-    for student in students:
-        if student['student_id'] == student_id:
-            return student
-    raise HTTPException(status_code=404, detail="Student not found")
 
-@app.get("/student", response_model=Student)
-def get_student_from_param_id(student_id: int):
+@app.get("/student/{student_id}")
+def get_student_from_param_id(student_id: int)->Student:
     students = json_to_dict_list(path_to_json)
     for student in students:
         if student["student_id"] == student_id:
             return student
 
+
+################ POST #################
+
+@app.post("/add_student")
+def add_student_handler(student: Student):
+    student_dict = student.dict()
+    check = add_student(student_dict)
+    if check:
+        return {"message": "Successfull added"}
+    else:
+        return {"message": "Error adding student"}
+    
+
+@app.put("/update_student")
+def update_student_handler(filter_student: SUpdateFilter, new_data: StudentUpdate):
+    check = upd_student(filter_student.dict(), new_data.dict())
+    if check:
+        return {"message": "Info updated successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Error updating student information")
+    
+@app.delete("/delete_student")
+def delete_student_handler(filter_student: SDeleteFilter):
+    check = dell_student(filter_student.key, filter_student.value)
+    if check:
+        return {"message": "Student deleted successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Error deleting student")
+    
+# uvicorn app.main:app --reload

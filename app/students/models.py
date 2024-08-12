@@ -1,8 +1,9 @@
 from enum import Enum
-from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationError
+from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationError, validate_arguments
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Any
 import re
+
 
 class Major(str, Enum):
     informatics = "Информатика"
@@ -11,6 +12,11 @@ class Major(str, Enum):
     medicine = "Медицина"
     engineering = "Инженерия"
     languages = "Языки"
+    history = "История"
+    math = "Математика"
+    biology = "Биология"
+    psylogy = "Психология"
+    ecology =  "Экология"
 
 class Student(BaseModel):
     student_id: int
@@ -26,6 +32,23 @@ class Student(BaseModel):
     special_notes: Optional[str] = Field(default=None, max_length=500,
                                          description="Дополнительные заметки, не более 500 символов")
 
+class RBStudent:
+    def __init__(self, course: int, major: str | None = None, enrollment_year: int | None = None):
+        self.course: int = course
+        self.major: Optional[str] = major
+        self.enrollment_year: Optional[int] = enrollment_year
+
+class SUpdateFilter(BaseModel):
+    student_id: int
+
+class StudentUpdate(BaseModel):
+    course: int = Field(..., ge=1, le=5, description="Курс должен быть в диапазоне от 1 до 5")
+    major: Optional[Major] = Field(..., description="Специальность студента")
+    phone_number: Optional[str] = Field(..., description="Мобильный телефон")
+
+class SDeleteFilter(BaseModel):
+    key: str
+    value: Any
 
 @field_validator("phone_bumber")
 @classmethod
@@ -40,3 +63,5 @@ def validate_date_of_birth(cls, values: date):
     if values and values >= datetime.now().date():
         raise ValueError('Дата рождения должна быть в прошлом')
     return values
+
+

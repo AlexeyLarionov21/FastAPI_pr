@@ -4,7 +4,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from models import Student
+from app.students.models import Student
 
 client = TestClient(app)
 
