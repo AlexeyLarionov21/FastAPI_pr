@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from typing import Optional
 import re
-from pydantic import BaseModel, Field, EmailStr, validator, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, field_validator, ConfigDict
 
 
 class SStudent(BaseModel):
@@ -17,13 +17,13 @@ class SStudent(BaseModel):
     course: int = Field(..., ge=1, le=5, description="Курс должен быть в диапазоне от 1 до 5")
     special_notes: Optional[str] = Field(None, max_length=500, description="Дополнительные заметки, не более 500 символов")
 
-    @validator("phone_number")
+    @field_validator("phone_number")
     def validate_phone_number(cls, value):
         if not re.match(r'^\+\d{1,15}$', value):
             raise ValueError('Номер телефона должен начинаться с "+" и содержать от 1 до 15 цифр')
         return value
 
-    @validator("date_of_birth")
+    @field_validator("date_of_birth")
     def validate_date_of_birth(cls, value):
         if value and value >= datetime.now().date():
             raise ValueError('Дата рождения должна быть в прошлом')

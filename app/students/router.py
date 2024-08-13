@@ -5,7 +5,7 @@ from typing import List
 
 router = APIRouter(prefix='/students', tags=['Работа со студентами'])
 
-@router.get("/", response_model=SStudent, summary="Получить всех студентов")
+@router.get("/", response_model=List[SStudent], summary="Получить всех студентов")
 async def get_all_students():
     return await StudentDAO.find_all_students()
     
