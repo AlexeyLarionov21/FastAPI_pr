@@ -17,7 +17,7 @@ class Student(Base):
     course: Mapped[int]
     special_notes: Mapped[str_null_true]
     major_id: Mapped[int] = mapped_column(ForeignKey("majors.id"), nullable=False)
-
+    
     major: Mapped["Major"] = relationship("Major", back_populates="students")
 
     def __str__(self):
@@ -35,6 +35,8 @@ class Major(Base):
     major_name: Mapped[str_uniq]
     major_description: Mapped[str_null_true]
     count_students: Mapped[int] = mapped_column(server_default=text('0'))
+    
+    students = relationship("Student", back_populates="major")
 
     def __str__(self):
         return f"{self.__class__.__name__}(id={self.id}, major_name={self.major_name!r})"
