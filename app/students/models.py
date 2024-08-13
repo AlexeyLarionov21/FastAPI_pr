@@ -1,67 +1,43 @@
-from enum import Enum
-from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationError, validate_arguments
-from datetime import date, datetime
-from typing import Optional, Any
-import re
+from sqlalchemy import ForeignKey, text, Text
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from app.database import Base, str_uniq, int_pk, str_null_true
+from datetime import date
 
 
-class Major(str, Enum):
-    informatics = "Информатика"
-    economics = "Экономика"
-    law = "Право"
-    medicine = "Медицина"
-    engineering = "Инженерия"
-    languages = "Языки"
-    history = "История"
-    math = "Математика"
-    biology = "Биология"
-    psylogy = "Психология"
-    ecology =  "Экология"
+# создаем модель таблицы студентов
+class Student(Base):
+    id: Mapped[int_pk]
+    phone_number: Mapped[str_uniq]
+    first_name: Mapped[str]
+    last_name: Mapped[str]
+    date_of_birth: Mapped[date]
+    email: Mapped[str_uniq]
+    address: Mapped[str] = mapped_column(Text, nullable=False)
+    enrollment_year: Mapped[int]
+    course: Mapped[int]
+    special_notes: Mapped[str_null_true]
+    major_id: Mapped[int] = mapped_column(ForeignKey("majors.id"), nullable=False)
 
-class Student(BaseModel):
-    student_id: int
-    phone_number: str = Field(default=..., description="Номер телефона в международном формате, начинающийся с '+'")
-    first_name: str = Field(default=..., min_length=1, max_length=50, description="Имя студента, от 1 до 50 символов")
-    last_name: str = Field(default=..., min_length=1, max_length=50, description="Фамилия студента, от 1 до 50 символов")
-    date_of_birth: date = Field(default=..., description="Дата рождения студента в формате ГГГГ-ММ-ДД")
-    email: EmailStr = Field(default=..., description="Электронная почта студента")
-    address: str = Field(default=..., min_length=10, max_length=200, description="Адрес студента, не более 200 символов")
-    enrollment_year: int = Field(default=..., ge=2002, description="Год поступления должен быть не меньше 2002")
-    major: Major = Field(default=..., description="Специальность студента")
-    course: int = Field(default=..., ge=1, le=5, description="Курс должен быть в диапазоне от 1 до 5")
-    special_notes: Optional[str] = Field(default=None, max_length=500,
-                                         description="Дополнительные заметки, не более 500 символов")
+    major: Mapped["Major"] = relationship("Major", back_populates="students")
 
-class RBStudent:
-    def __init__(self, course: int, major: str | None = None, enrollment_year: int | None = None):
-        self.course: int = course
-        self.major: Optional[str] = major
-        self.enrollment_year: Optional[int] = enrollment_year
+    def __str__(self):
+        return (f"{self.__class__.__name__}(id={self.id}, "
+                f"first_name={self.first_name!r},"
+                f"last_name={self.last_name!r})")
 
-class SUpdateFilter(BaseModel):
-    student_id: int
-
-class StudentUpdate(BaseModel):
-    course: int = Field(..., ge=1, le=5, description="Курс должен быть в диапазоне от 1 до 5")
-    major: Optional[Major] = Field(..., description="Специальность студента")
-    phone_number: Optional[str] = Field(..., description="Мобильный телефон")
-
-class SDeleteFilter(BaseModel):
-    key: str
-    value: Any
-
-@field_validator("phone_bumber")
-@classmethod
-def validate_phone_number(cls, values: str) -> str:
-    if not re.match(r'^\+\d{1,15}$', values):
-        raise ValidationError('Номер телефона должен начинаться с "+" и содержать от 1 до 15 цифр')
-    return values
-    
-@field_validator("date_of_birth")
-@classmethod
-def validate_date_of_birth(cls, values: date):
-    if values and values >= datetime.now().date():
-        raise ValueError('Дата рождения должна быть в прошлом')
-    return values
+    def __repr__(self):
+        return str(self)
 
 
+# создаем модель таблицы факультетов (majors)
+class Major(Base):
+    id: Mapped[int_pk]
+    major_name: Mapped[str_uniq]
+    major_description: Mapped[str_null_true]
+    count_students: Mapped[int] = mapped_column(server_default=text('0'))
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(id={self.id}, major_name={self.major_name!r})"
+
+    def __repr__(self):
+        return str(self)
